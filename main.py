@@ -20,3 +20,21 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+async def voice_to_text(voice_file_path: str) -> str:
+    ogg_path = voice_file_path
+    wav_path = ogg_path.replace(".ogg", ".wav")
+
+
+    sound = AudioSegment.from_ogg(ogg_path)
+    sound.export(wav_path, format="wav")
+
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(wav_path) as source:
+        audio = recognizer.record(source)
+    try:
+        text = recognizer.recognize_google(audio, language="ru-RU")
+        return text
+    except sr.UnknownValueError:
+        return "Не удалось распознать речь."
+    except sr.RequestError:
+        return "Ошибка при обращении к сервису распознавания."
