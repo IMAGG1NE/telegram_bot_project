@@ -38,3 +38,22 @@ async def voice_to_text(voice_file_path: str) -> str:
         return "Не удалось распознать речь."
     except sr.RequestError:
         return "Ошибка при обращении к сервису распознавания."
+    
+@dp.message(lambda msg: msg.voice is not None)
+async def handle_voice(message: types.Message):
+    file_info = await bot.get_file(message.voice.file_id)
+    file_path = file_info.file_path
+    file_name = f"voice_{message.from_user.id}.ogg"
+
+    await bot.download_file(file_path, file_name)
+    await message.answer("⏳ Распознаю голос...")
+
+    text = await voice_to_text(file_name)
+    await message.answer(f"🗣 Распознанный текст:\n\n{text}")
+
+    summary = await summarize_text(text)
+    await message.answer(f"🧠 Краткая выжимка:\n\n{summary}")
+
+    os.remove(file_name)
+    if os.path.exists(file_name.replace(".ogg", ".wav")):
+        os.remove(file_name.replace(".ogg", ".wav"))
